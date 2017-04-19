@@ -1,0 +1,379 @@
+package br.ufpb.dce.poo.gui;
+
+import java.awt.Color;
+
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
+
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
+
+import br.ufpb.dce.poo.logica.AdicionaPalavrasException;
+import br.ufpb.dce.poo.logica.GerenciadorDeJogo;
+
+public class CacaPalavrasGui extends JFrame implements MouseListener {
+
+	private static final long serialVersionUID = 1L;
+	private JButton btInicialNew;
+	private JButton btInicialLoad;
+	private JButton btNivelFacil;
+	private JButton btNivelMedio;
+	private JButton btNivelDificil;
+	private JButton btSairPartida;
+	private JButton btGuardarPartida;
+	private JPanel contentPane;
+	private JPanel painelLista; 
+	private byte tamanho;
+	private byte contadorDeAcertos;
+	private String selecao = "";
+	private String [] palavras = {"PROGRAMACAO","HERANCA","POLIMORFISMO","JAVA","APLET","CLASS","CREATOR"};
+	private JLabel[][] labels;
+	private JLabel[] labelsPalavras;
+	private boolean arrastando = false;
+	private GerenciadorDeJogo g;
+	private boolean gravadoOUNao =false;
+
+
+
+
+	public static void main(String[] args) {
+		new CacaPalavrasGui().telaInicial();
+	}
+
+	/**
+	 * Create the frame.
+	 */
+	public CacaPalavrasGui(){
+		super("Caça Palavras");
+		this.getContentPane().setLayout(null);
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.setVisible(true);
+		this.setSize(1000, 500);
+		contentPane = new JPanel(null);
+		this.g = new GerenciadorDeJogo();
+	}
+
+
+
+	public void telaInicial(){
+
+		this.setResizable(false);
+		this.setBounds(300, 100, 800, 350);
+		this.getContentPane().remove(contentPane);
+		contentPane = new JPanel(null);
+		contentPane.setBounds(50, 0, 800, 500);
+		this.getContentPane().add(contentPane);
+		btInicialNew = new JButton("Novo Jogo");
+		btInicialNew.setBounds(10, 30, 300, 150);
+		btInicialNew.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				
+				telaNiveis();
+			}
+		});
+		contentPane.add(btInicialNew);
+
+		btInicialLoad = new JButton("Carregar Rodada");
+		btInicialLoad.setBounds(400, 30, 300, 150);
+		btInicialLoad.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					g.getGerenteDeNivel().setNivel(g.getGravador().lerRodada());
+				} catch (FileNotFoundException e) {
+					
+					e.printStackTrace();
+				} catch (ClassNotFoundException e) {
+					
+					e.printStackTrace();
+				} catch (IOException e) {
+					
+					e.printStackTrace();
+				}
+				for (int i = 0;i<labelsPalavras.length;i++){
+					labelsPalavras[i].setBackground(Color.white);
+				}
+				telaJogo();
+				
+			}
+		});
+		contentPane.add(btInicialLoad);
+		SwingUtilities.updateComponentTreeUI(this);
+	}
+
+
+
+
+
+
+	//TELA PARA ESCOLHER OS NIVEIS
+
+	public void telaNiveis(){
+		this.setResizable(false);
+		this.setBounds(400, 100, 500, 500);
+
+		this.getContentPane().remove(contentPane);
+		contentPane = new JPanel(null);
+		contentPane.setBounds(0, 0, 500, 500);
+		this.getContentPane().add(contentPane);
+
+		btNivelFacil = new JButton("Facil");
+		btNivelFacil.setBounds(145, 30, 200, 80);
+		btNivelFacil.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				tamanho = 15;
+				telaJogo();
+			}
+		});
+		contentPane.add(btNivelFacil);
+
+		btNivelMedio = new JButton("Medio");
+		btNivelMedio.setBounds(145, 180, 200, 80);
+		btNivelMedio.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				tamanho = 20;
+				telaJogo();
+			}
+		});
+		contentPane.add(btNivelMedio);
+
+
+		btNivelDificil = new JButton("Dificil");
+		btNivelDificil.setBounds(145, 330, 200, 80);
+		btNivelDificil.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				tamanho = 25;
+				telaJogo();
+			}
+		});
+		contentPane.add(btNivelDificil);
+		SwingUtilities.updateComponentTreeUI(this);
+	}
+
+
+
+
+
+
+	//TELA DO JOGO
+
+
+	
+	
+	
+	public void telaJogo() {
+
+		if(!gravadoOUNao){
+			contadorDeAcertos = 0;
+			
+
+			if(tamanho == 15){
+				g.getGerenteDeNivel().getNivel().nivelFacil();
+				labelsPalavras = new JLabel[7];
+			}else if(tamanho == 20){
+				g.getGerenteDeNivel().getNivel().nivelMedio();
+				labelsPalavras = new JLabel[10];
+			}else{
+				g.getGerenteDeNivel().getNivel().nivelDificil();
+				labelsPalavras = new JLabel[12];
+			}
+
+			g.getGerenteDeNivel().carregaMatrizComLetrasAleatorias();
+
+
+			for(int i=0;i<palavras.length;i++){
+				if (i/2==0){
+					try {
+						g.getGerenteDeNivel().adicionarPalavraHorizontal(palavras[i]);
+					} catch (AdicionaPalavrasException e) {
+						
+						e.printStackTrace();
+					}
+				}
+				else{
+					try {
+						g.getGerenteDeNivel().adicionarPalavraVertical(palavras[i]);
+					} catch (AdicionaPalavrasException e) {
+						
+						e.printStackTrace();
+					}
+				}
+			}
+
+		}
+		this.setResizable(true);
+		this.setExtendedState(MAXIMIZED_BOTH);
+		this.getContentPane().remove(contentPane);
+
+		contentPane = new JPanel(null); 
+		contentPane.setBounds(10, 10, 800, 600);
+		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
+		contentPane.setLayout(new GridLayout(tamanho, tamanho));
+
+		this.getContentPane().add(contentPane);
+
+		btSairPartida = new JButton("Sair");
+		btSairPartida.setBounds(200, 630, 100, 50);
+		btSairPartida.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				for (int i = 0;i<labelsPalavras.length;i++){
+					labelsPalavras[i].setBackground(Color.white);
+				}
+				gravadoOUNao = false;
+				telaInicial();
+				
+				
+			}
+		});
+		this.getContentPane().add(btSairPartida);
+
+		btGuardarPartida = new JButton("Guarda Rodada");
+		btGuardarPartida.setBounds(350, 630, 150, 50);
+		btGuardarPartida.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				
+				try {
+					g.getGravador().gravarRodada(g.getGerenteDeNivel().getNivel());
+				} catch (FileNotFoundException e) {
+					
+					e.printStackTrace();
+				} catch (IOException e) {
+					
+					e.printStackTrace();
+				}
+				gravadoOUNao= true;
+				telaInicial();
+				
+			}
+		});
+		this.getContentPane().add(btGuardarPartida);
+
+		labels = new JLabel[tamanho][tamanho];
+
+		for (int i = 0; i < tamanho; i++) {
+			for (int j = 0; j < tamanho; j++) {
+				JLabel label = new JLabel(String.valueOf(g.getGerenteDeNivel().getNivel().getMatriz().getLetras()[i][j].getLetra()));
+				label.setBorder(new LineBorder(Color.black, 1));
+				label.setHorizontalAlignment(SwingConstants.CENTER);
+				label.setBackground(Color.white);
+				label.setOpaque(true);
+				label.addMouseListener(this);
+				label.setBounds(10, 10, 15, 15);
+
+
+				labels[i][j] = label;
+
+				contentPane.add(label);
+
+			}
+		}
+		
+
+		painelLista = new JPanel(null);
+		painelLista.setLayout(new GridLayout(6,1));
+		painelLista.setBounds(820, 15, 300, 600);
+
+
+		for(int i = 0;i<palavras.length;i++){
+			JLabel lbPalavras = new JLabel(palavras[i]);
+			lbPalavras.setBorder(new LineBorder(Color.black, 1));
+			lbPalavras.setHorizontalAlignment(SwingConstants.CENTER);
+			lbPalavras.setBackground(Color.white);
+			lbPalavras.setOpaque(true);
+			lbPalavras.setBounds(10, 10, 15, 15);
+			labelsPalavras [i] = lbPalavras;
+			painelLista.add(lbPalavras);
+
+
+		}
+		this.getContentPane().add(painelLista);
+
+		SwingUtilities.updateComponentTreeUI(this);
+	}
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent e) {
+
+		if (e.getSource() instanceof JLabel) {
+			JLabel label = (JLabel) e.getSource();
+			if (arrastando) {
+				label.setBackground(Color.yellow);
+				selecao += label.getText();
+			}
+		}
+	}
+
+	@Override
+	public void mouseExited(MouseEvent e) {
+
+	}
+
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if (e.getSource() instanceof JLabel) {
+			arrastando = true;
+			JLabel label = (JLabel) e.getSource();
+			selecao += label.getText();
+			label.setBackground(Color.yellow);
+
+		}
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		boolean tem = false;
+		arrastando = false;
+		for(int i = 0; i < palavras.length;i++){
+			if(palavras[i].equalsIgnoreCase(selecao)){
+				labelsPalavras[i].setBackground(Color.green);
+				tem = true;
+			}
+		}
+		if(tem){
+			JOptionPane.showMessageDialog(null,"Acertou a palavra :"+selecao);
+			contadorDeAcertos++;
+		}else{
+			JOptionPane.showMessageDialog(null,"errou a palavra "+selecao+" nao existe na lista");
+		}
+		if(contadorDeAcertos == palavras.length){
+			JOptionPane.showMessageDialog(null,"Parabéns você Acertou todas as Palavras");
+			contadorDeAcertos = 0;
+			gravadoOUNao = false;
+			telaInicial();
+			
+		}
+		selecao = "";
+		for (int i = 0; i < tamanho; i++) {
+			for (int j = 0; j < tamanho; j++) {
+				labels[i][j].setBackground(Color.white);
+			}
+		}
+	}
+
+
+}
